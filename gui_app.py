@@ -26,6 +26,22 @@ from mcp_client import MCPClient
 
 logger = logging.getLogger(__name__)
 
+# Greeting shown automatically when the chat first loads (before any user input).
+WELCOME_MESSAGE = (
+    "👋 Hi! Welcome to our store.<br>"
+    "I'm your shopping assistant, and I'm here to help you find products, "
+    "check offers, manage your cart, and place orders.<br><br>"
+    "🔐 You can <b>log in</b> to access your account, view your orders, and enjoy a personalized shopping experience, "
+    "or continue as a <b>Guest</b> to browse products and place an order without signing in.<br><br>"
+    "What are you looking for today?"
+)
+
+
+def _welcome_messages() -> list:
+    """A fresh message list seeded with the welcome greeting."""
+    return [{"role": "assistant", "content": WELCOME_MESSAGE, "id": 0}]
+
+
 # --- Configuration & Initialization ---
 st.set_page_config(
     page_title="E-Commerce Shopping Assistant",
@@ -36,7 +52,7 @@ st.set_page_config(
 
 # Initialize session state variables
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = _welcome_messages()
     
 if "client" not in st.session_state:
     st.session_state.client = None
@@ -106,8 +122,17 @@ with st.sidebar:
         # Session Management
         st.divider()
         if st.button("Clear Conversation"):
-            st.session_state.messages = []
+            st.session_state.messages = _welcome_messages()
             st.session_state.client.session_id = None
+            # Also clear the server-side sticky product-search context, so the next
+            # 'show me ...' starts fresh instead of inheriting the old gender/type/colour.
+            try:
+                loop = get_or_create_eventloop()
+                loop.run_until_complete(
+                    st.session_state.client.call_tool("reset_context", {})
+                )
+            except Exception:
+                pass
             st.rerun()
 
 # --- Main Chat UI ---
