@@ -110,7 +110,7 @@ def _validate_address(firstname, lastname, street, city, state_or_region,
     if not country_id:
         return ({"status": "error",
                  "message": f"I couldn't recognise the country '{country}'. Please write the full "
-                            f"country name, e.g. 'United States' or 'India'."}, None)
+                            f"country name, e.g. 'United Kingdom' or 'India'."}, None)
 
     region_err = _check_region(country, country_id, state_or_region)
     if region_err:
